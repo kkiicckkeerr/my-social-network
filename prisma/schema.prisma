@@ -1,0 +1,68 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  username     String    @unique
+  avatarUrl    String?
+  createdAt    DateTime  @default(now())
+  
+  posts        Post[]
+  messages     Message[]
+  
+  followers    Follows[] @relation("following")
+  following    Follows[] @relation("follower")
+  
+  chats        ChatParticipant[]
+}
+
+model Follows {
+  followerId  String
+  followingId String
+  follower    User   @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User   @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  imageUrl  String
+  caption   String?
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Chat {
+  id           String    @id @default(uuid())
+  createdAt    DateTime  @default(now())
+  messages     Message[]
+  participants ChatParticipant[]
+}
+
+model ChatParticipant {
+  chatId String
+  userId String
+  chat   Chat   @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([chatId, userId])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  text      String
+  createdAt DateTime @default(now())
+  chatId    String
+  userId    String
+  chat   Chat   @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
